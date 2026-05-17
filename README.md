@@ -4,6 +4,11 @@ A web app that **designs web app architectures**. Fill in project requirements (
 
 The core is a pure rule engine (`Input → Architecture`) — each rule encodes an architectural decision with its rationale. Adding a new rule is the unit of progress.
 
+## Live demo
+
+- **Web:** <https://arch-constructor-web.vercel.app>
+- **API:** <https://arch-api-rbp0.onrender.com/api/health>
+
 ## Stack
 
 | Layer | Tech |
