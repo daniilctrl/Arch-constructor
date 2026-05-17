@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-white text-gray-900 antialiased;
+}
+
+.input {
+  @apply rounded border border-gray-300 px-2 py-1 text-sm w-full;
+}
+.label {
+  @apply block text-sm font-medium text-gray-700 mb-1;
+}
+.section {
+  @apply border border-gray-200 rounded-lg p-4 mb-4;
+}
+.section h2 {
+  @apply text-lg font-semibold mb-3;
+}
+.btn {
+  @apply rounded bg-gray-900 px-4 py-2 text-white text-sm hover:bg-gray-700 disabled:opacity-50;
+}
