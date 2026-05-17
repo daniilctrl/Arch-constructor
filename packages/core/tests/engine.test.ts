@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { build } from "../src/engine.js";
-import type { Input } from "../src/types.js";
+import type { Input } from "../src/input.js";
+import { InputSchema } from "../src/input.js";
 
 const base: Input = {
   rps: "low",
@@ -151,5 +152,33 @@ describe("decisions track originating rule", () => {
     const objstore = arch.components.find((c) => c.id === "objstore")!;
     expect(objstore.reason).toContain("R7");
     expect(arch.decisions.some((d) => d.ruleId === "R7")).toBe(true);
+  });
+});
+
+describe("InputSchema validates", () => {
+  it("accepts a well-formed input", () => {
+    expect(InputSchema.safeParse(base).success).toBe(true);
+  });
+
+  it("rejects an unknown enum value", () => {
+    const bad = { ...base, rps: "extreme" };
+    expect(InputSchema.safeParse(bad).success).toBe(false);
+  });
+
+  it("rejects missing required fields", () => {
+    const { rps: _omit, ...partial } = base;
+    expect(InputSchema.safeParse(partial).success).toBe(false);
+  });
+
+  it("rejects extra fields (strict)", () => {
+    expect(
+      InputSchema.safeParse({ ...base, sneakyExtra: true }).success,
+    ).toBe(false);
+  });
+
+  it("rejects empty compliance array", () => {
+    expect(InputSchema.safeParse({ ...base, compliance: [] }).success).toBe(
+      false,
+    );
   });
 });

@@ -1,16 +1,10 @@
 {
   "name": "arch-constructor",
   "version": "0.0.1",
-  "description": "Web architecture constructor: requirements in, architecture out.",
-  "type": "module",
+  "private": true,
   "scripts": {
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck"
   },
-  "devDependencies": {
-    "typescript": "^5.6.0",
-    "vitest": "^2.1.0",
-    "@types/node": "^22.0.0"
-  }
+  "packageManager": "pnpm@9.15.0"
 }

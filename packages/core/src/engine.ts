@@ -3,9 +3,9 @@ import type {
   Component,
   ComponentKind,
   Edge,
-  Input,
   Rule,
 } from "./types.js";
+import type { Input } from "./input.js";
 import { rules } from "./rules.js";
 
 export function emptyArchitecture(): Architecture {
