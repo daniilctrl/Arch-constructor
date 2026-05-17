@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: arch-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: arch
+      POSTGRES_PASSWORD: arch
+      POSTGRES_DB: arch_constructor
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U arch -d arch_constructor"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres_data:

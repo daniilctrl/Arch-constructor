@@ -1,0 +1,24 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Design {
+  id            String   @id @default(cuid())
+  name          String?
+  input         Json
+  architecture  Json
+  engineVersion String
+  parentId      String?
+  parent        Design?  @relation("Forks", fields: [parentId], references: [id], onDelete: SetNull)
+  forks         Design[] @relation("Forks")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([parentId])
+  @@index([createdAt])
+}
