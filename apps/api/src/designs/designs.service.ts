@@ -1,8 +1,15 @@
-import { Inject, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import type { Design } from "@prisma/client";
 import {
   build,
   ENGINE_VERSION,
+  renderMarkdown,
+  renderMermaid,
   type Architecture,
   type Input,
 } from "@arch/core";
@@ -64,6 +71,26 @@ export class DesignsService {
   async remove(id: string): Promise<void> {
     const existing = await this.findOne(id);
     await this.prisma.design.delete({ where: { id: existing.id } });
+  }
+
+  async render(
+    id: string,
+    format: "mermaid" | "markdown",
+  ): Promise<{ body: string; contentType: string }> {
+    const design = await this.findOne(id);
+    const arch = design.architecture as unknown as Architecture;
+
+    if (format === "mermaid") {
+      return { body: renderMermaid(arch), contentType: "text/plain; charset=utf-8" };
+    }
+    if (format === "markdown") {
+      const md = renderMarkdown(arch, {
+        title: design.name ?? `Design ${design.id}`,
+        engineVersion: design.engineVersion,
+      });
+      return { body: md, contentType: "text/markdown; charset=utf-8" };
+    }
+    throw new BadRequestException("format must be 'mermaid' or 'markdown'");
   }
 
   async fork(id: string, dto: ForkDesignDto): Promise<Design> {

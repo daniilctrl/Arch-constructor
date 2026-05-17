@@ -153,6 +153,12 @@ describe("decisions track originating rule", () => {
     expect(objstore.reason).toContain("R7");
     expect(arch.decisions.some((d) => d.ruleId === "R7")).toBe(true);
   });
+
+  it("does not duplicate decisions across multi-pass fixpoint loop", () => {
+    const arch = build(base);
+    const ids = arch.decisions.map((d) => `${d.ruleId}:${d.title}`);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
 });
 
 describe("InputSchema validates", () => {

@@ -60,7 +60,12 @@ export function addDecision(
   title: string,
   rationale: string,
 ): void {
-  arch.decisions.push({ ruleId, title, rationale });
+  // Multi-pass build can re-fire a rule whose 'when' still matches; decisions
+  // are conceptually unique per (ruleId, title), so dedupe.
+  const dup = arch.decisions.some(
+    (d) => d.ruleId === ruleId && d.title === title,
+  );
+  if (!dup) arch.decisions.push({ ruleId, title, rationale });
 }
 
 export function build(input: Input, ruleSet: Rule[] = rules): Architecture {
