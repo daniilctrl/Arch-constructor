@@ -4,7 +4,7 @@ import { notFound, useParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { build, type Architecture, type Input } from "@arch/core";
-import InputForm from "@/components/InputForm";
+import PlayWizard from "@/components/PlayWizard";
 import { compareArchitectures, type ArchComparison } from "@/lib/compare";
 import { getLevel } from "@/lib/levels";
 
@@ -40,15 +40,12 @@ export default function PlayLevelPage() {
         <p className="text-sm leading-relaxed">{level.scenario}</p>
       </section>
 
-      <InputForm
-        showName={false}
-        submitLabel={result ? "Submit again" : "Submit my design"}
+      <PlayWizard
         onSubmit={async ({ input }) => {
           const playerArch = build(input);
           const comparison = compareArchitectures(playerArch, expectedArch);
           setResult({ playerInput: input, playerArch, comparison });
           setShowExpert(false);
-          // Scroll to results.
           setTimeout(() => {
             document.getElementById("results")?.scrollIntoView({
               behavior: "smooth",
