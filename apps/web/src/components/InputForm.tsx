@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { InputSchema, type Input } from "@arch/core";
@@ -41,6 +41,11 @@ export type InputFormProps = {
    * Whether to redirect/reset is the parent's call.
    */
   onSubmit: (values: { name?: string; input: Input }) => Promise<void>;
+  /**
+   * Called on every form change with the current (possibly-incomplete) values.
+   * Used for live preview. Fires frequently — caller should debounce/throttle.
+   */
+  onChange?: (values: { name?: string; input: Input }) => void;
 };
 
 export default function InputForm({
@@ -48,14 +53,31 @@ export default function InputForm({
   showName = true,
   submitLabel = "Build architecture",
   onSubmit,
+  onChange,
 }: InputFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { register, handleSubmit, control, formState } = useForm<FormValues>({
+  const { register, handleSubmit, control, formState, watch } = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
     defaultValues: { name: "", input: initial ?? defaultInput },
   });
+
+  useEffect(() => {
+    if (!onChange) return;
+    // Emit initial values once so the preview shows the default architecture.
+    const initialValues = watch();
+    if (initialValues.input) {
+      onChange(initialValues as { name?: string; input: Input });
+    }
+    const sub = watch((value) => {
+      if (value.input) {
+        onChange(value as { name?: string; input: Input });
+      }
+    });
+    return () => sub.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onChange]);
 
   const submit = handleSubmit(async (values) => {
     setSubmitting(true);
