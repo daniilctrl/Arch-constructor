@@ -9,6 +9,25 @@ import {
 } from "@arch/core";
 import MermaidDiagram from "./MermaidDiagram";
 
+type CollapsibleProps = {
+  defaultOpen?: boolean;
+  summary: string;
+  children: React.ReactNode;
+};
+
+function Collapsible({ defaultOpen = false, summary, children }: CollapsibleProps) {
+  return (
+    <details open={defaultOpen} className="group">
+      <summary className="cursor-pointer text-sm font-medium text-gray-700 select-none">
+        {summary}
+        <span className="text-gray-400 ml-1 group-open:hidden">▸</span>
+        <span className="text-gray-400 ml-1 hidden group-open:inline">▾</span>
+      </summary>
+      <div className="mt-2">{children}</div>
+    </details>
+  );
+}
+
 type Props = {
   input: Input | null;
   /** Debounce delay before recomputing the architecture (ms). */
@@ -89,6 +108,29 @@ export default function LivePreview({ input, debounceMs = 200 }: Props) {
           ))}
         </ul>
       </div>
+
+      {arch.decisions.length > 0 && (
+        <div className="section">
+          <Collapsible
+            defaultOpen
+            summary={`Why these components? (${arch.decisions.length})`}
+          >
+            <ul className="space-y-3">
+              {arch.decisions.map((d) => (
+                <li key={d.ruleId + d.title} className="text-sm">
+                  <div className="font-medium text-gray-800">
+                    <span className="inline-block text-xs font-mono text-gray-500 mr-2">
+                      {d.ruleId}
+                    </span>
+                    {d.title}
+                  </div>
+                  <div className="text-xs text-gray-600 mt-0.5">{d.rationale}</div>
+                </li>
+              ))}
+            </ul>
+          </Collapsible>
+        </div>
+      )}
     </div>
   );
 }

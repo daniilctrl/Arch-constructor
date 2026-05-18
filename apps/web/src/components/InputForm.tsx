@@ -6,6 +6,7 @@ import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { InputSchema, type Input } from "@arch/core";
 import { defaultInput } from "@/lib/defaults";
+import { complianceOptions, fields, toggles, type SelectOption, type ToggleDef } from "@/lib/fields";
 
 const FormSchema = z.object({
   name: z.string().min(1).max(200).optional(),
@@ -13,38 +14,11 @@ const FormSchema = z.object({
 });
 type FormValues = z.infer<typeof FormSchema>;
 
-const opts = {
-  rps: ["low", "medium", "high", "very_high"],
-  dataVolume: ["small", "medium", "large"],
-  growth: ["stable", "growing", "viral"],
-  dataShape: ["relational", "document", "key_value", "graph", "timeseries", "mixed"],
-  consistency: ["strong", "eventual", "mixed"],
-  readWriteRatio: ["read_heavy", "balanced", "write_heavy"],
-  search: ["none", "basic", "fulltext"],
-  teamSize: ["solo", "small", "medium", "large"],
-  teamExperience: ["junior", "mixed", "senior"],
-  deployment: ["on_prem", "cloud", "hybrid"],
-  budget: ["tight", "normal", "generous"],
-} as const;
-
-const complianceOptions = ["none", "gdpr", "hipaa", "pci"] as const;
-
 export type InputFormProps = {
-  /** Initial input shown in the form. Defaults to `defaultInput`. */
   initial?: Input;
-  /** Whether to show the optional name field. Defaults to true. */
   showName?: boolean;
-  /** Submit button label. */
   submitLabel?: string;
-  /**
-   * Called with the validated form values on submit. Should throw to show an error.
-   * Whether to redirect/reset is the parent's call.
-   */
   onSubmit: (values: { name?: string; input: Input }) => Promise<void>;
-  /**
-   * Called on every form change with the current (possibly-incomplete) values.
-   * Used for live preview. Fires frequently — caller should debounce/throttle.
-   */
   onChange?: (values: { name?: string; input: Input }) => void;
 };
 
@@ -63,10 +37,6 @@ export default function InputForm({
     defaultValues: { name: "", input: initial ?? defaultInput },
   });
 
-  // Keep the latest onChange in a ref so the subscription below can stay
-  // mount-only. Without this, parents that pass inline arrow functions would
-  // cause the subscription to re-create on every render, which leads to an
-  // infinite emit loop (each emit triggers a re-render which triggers re-sub).
   const onChangeRef = useRef(onChange);
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -78,7 +48,6 @@ export default function InputForm({
         onChangeRef.current({ name: v.name, input: v.input });
       }
     };
-    // Initial emit so the preview shows the default architecture.
     emit(watch());
     const sub = watch((value) => emit(value as { name?: string; input?: Input }));
     return () => sub.unsubscribe();
@@ -104,83 +73,112 @@ export default function InputForm({
     <form onSubmit={submit} className="space-y-4">
       {showName && (
         <section className="section">
-          <h2>About this design</h2>
-          <label className="label" htmlFor="name">
-            Name (optional)
-          </label>
+          <h2>Name this design</h2>
           <input
             id="name"
             className="input"
             placeholder="e.g. Photo sharing service"
             {...register("name")}
           />
+          <p className="text-xs text-gray-500 mt-1">Optional. Used for the saved page title.</p>
         </section>
       )}
 
       <section className="section">
         <h2>Workload</h2>
-        <div className="grid grid-cols-2 gap-3">
-          <Select label="RPS" name="input.rps" options={opts.rps} register={register} />
-          <Select label="Data volume" name="input.dataVolume" options={opts.dataVolume} register={register} />
-          <Select label="Growth" name="input.growth" options={opts.growth} register={register} />
-          <Select label="Read/Write ratio" name="input.readWriteRatio" options={opts.readWriteRatio} register={register} />
+        <div className="space-y-3">
+          <Field
+            name="input.rps"
+            question={fields.rps.question}
+            options={fields.rps.options}
+            register={register}
+          />
+          <Field
+            name="input.dataVolume"
+            question={fields.dataVolume.question}
+            options={fields.dataVolume.options}
+            register={register}
+          />
+          <Field
+            name="input.growth"
+            question={fields.growth.question}
+            options={fields.growth.options}
+            register={register}
+          />
+          <Field
+            name="input.readWriteRatio"
+            question={fields.readWriteRatio.question}
+            options={fields.readWriteRatio.options}
+            register={register}
+          />
+          <Toggle def={toggles.latencyCritical} register={register} />
         </div>
-        <CheckBox label="Latency critical (p99 < 100ms)" name="input.latencyCritical" register={register} />
       </section>
 
       <section className="section">
         <h2>Data</h2>
-        <div className="grid grid-cols-2 gap-3">
-          <Select label="Shape" name="input.dataShape" options={opts.dataShape} register={register} />
-          <Select label="Consistency" name="input.consistency" options={opts.consistency} register={register} />
+        <div className="space-y-3">
+          <Field
+            name="input.dataShape"
+            question={fields.dataShape.question}
+            options={fields.dataShape.options}
+            register={register}
+          />
+          <Field
+            name="input.consistency"
+            question={fields.consistency.question}
+            options={fields.consistency.options}
+            register={register}
+          />
         </div>
       </section>
 
       <section className="section">
-        <h2>Features</h2>
-        <CheckBox label="Realtime (push, websockets)" name="input.realtime" register={register} />
-        <CheckBox label="Long-running jobs (reports, ML, video)" name="input.longRunningJobs" register={register} />
-        <CheckBox label="File storage (images, documents)" name="input.fileStorage" register={register} />
-        <CheckBox label="Analytics / dashboards" name="input.analytics" register={register} />
-        <Select label="Search" name="input.search" options={opts.search} register={register} />
+        <h2>What it does</h2>
+        <div className="space-y-2">
+          <Toggle def={toggles.realtime} register={register} />
+          <Toggle def={toggles.longRunningJobs} register={register} />
+          <Toggle def={toggles.fileStorage} register={register} />
+          <Toggle def={toggles.analytics} register={register} />
+        </div>
+        <div className="mt-4">
+          <Field
+            name="input.search"
+            question={fields.search.question}
+            options={fields.search.options}
+            register={register}
+          />
+        </div>
       </section>
 
       <section className="section">
         <h2>Team & deployment</h2>
-        <div className="grid grid-cols-2 gap-3">
-          <Select label="Team size" name="input.teamSize" options={opts.teamSize} register={register} />
-          <Select label="Experience" name="input.teamExperience" options={opts.teamExperience} register={register} />
-          <Select label="Deployment" name="input.deployment" options={opts.deployment} register={register} />
-          <Select label="Budget" name="input.budget" options={opts.budget} register={register} />
-        </div>
-        <div className="mt-3">
-          <span className="label">Compliance</span>
-          <Controller
-            control={control}
-            name="input.compliance"
-            render={({ field }) => (
-              <div className="flex flex-wrap gap-3">
-                {complianceOptions.map((c) => {
-                  const checked = field.value?.includes(c) ?? false;
-                  return (
-                    <label key={c} className="inline-flex items-center gap-1 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={(e) => {
-                          const next = new Set(field.value ?? []);
-                          if (e.target.checked) next.add(c);
-                          else next.delete(c);
-                          field.onChange(Array.from(next));
-                        }}
-                      />
-                      {c}
-                    </label>
-                  );
-                })}
-              </div>
-            )}
+        <div className="space-y-3">
+          <Field
+            name="input.teamSize"
+            question={fields.teamSize.question}
+            options={fields.teamSize.options}
+            register={register}
           />
+          <Field
+            name="input.teamExperience"
+            question={fields.teamExperience.question}
+            options={fields.teamExperience.options}
+            register={register}
+          />
+          <Field
+            name="input.deployment"
+            question={fields.deployment.question}
+            options={fields.deployment.options}
+            register={register}
+          />
+          <Field
+            name="input.budget"
+            question={fields.budget.question}
+            options={fields.budget.options}
+            register={register}
+          />
+          <ComplianceField control={control} />
         </div>
       </section>
 
@@ -202,24 +200,24 @@ export default function InputForm({
   );
 }
 
-function Select({
-  label,
+function Field({
   name,
+  question,
   options,
   register,
 }: {
-  label: string;
   name: string;
-  options: readonly string[];
+  question: string;
+  options: readonly SelectOption[];
   register: ReturnType<typeof useForm<FormValues>>["register"];
 }) {
   return (
     <div>
-      <label className="label">{label}</label>
+      <label className="label">{question}</label>
       <select className="input" {...register(name as never)}>
         {options.map((o) => (
-          <option key={o} value={o}>
-            {o}
+          <option key={o.value} value={o.value}>
+            {o.label}
           </option>
         ))}
       </select>
@@ -227,19 +225,69 @@ function Select({
   );
 }
 
-function CheckBox({
-  label,
-  name,
+function Toggle({
+  def,
   register,
 }: {
-  label: string;
-  name: string;
+  def: ToggleDef;
   register: ReturnType<typeof useForm<FormValues>>["register"];
 }) {
   return (
-    <label className="inline-flex items-center gap-2 text-sm mr-4">
-      <input type="checkbox" {...register(name as never)} />
-      {label}
+    <label className="flex items-start gap-3 cursor-pointer rounded p-2 -mx-2 hover:bg-gray-50">
+      <input
+        type="checkbox"
+        className="mt-0.5"
+        {...register(def.name as never)}
+      />
+      <span>
+        <span className="text-sm font-medium block">{def.label}</span>
+        <span className="text-xs text-gray-500 block">{def.description}</span>
+      </span>
     </label>
+  );
+}
+
+function ComplianceField({
+  control,
+}: {
+  control: ReturnType<typeof useForm<FormValues>>["control"];
+}) {
+  return (
+    <div>
+      <span className="label">Compliance requirements</span>
+      <Controller
+        control={control}
+        name="input.compliance"
+        render={({ field }) => (
+          <div className="space-y-2">
+            {complianceOptions.map((c) => {
+              const checked = field.value?.includes(c.value as never) ?? false;
+              return (
+                <label
+                  key={c.value}
+                  className="flex items-start gap-3 cursor-pointer rounded p-2 -mx-2 hover:bg-gray-50"
+                >
+                  <input
+                    type="checkbox"
+                    className="mt-0.5"
+                    checked={checked}
+                    onChange={(e) => {
+                      const next = new Set(field.value ?? []);
+                      if (e.target.checked) next.add(c.value as never);
+                      else next.delete(c.value as never);
+                      field.onChange(Array.from(next));
+                    }}
+                  />
+                  <span>
+                    <span className="text-sm font-medium block">{c.label}</span>
+                    <span className="text-xs text-gray-500 block">{c.description}</span>
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        )}
+      />
+    </div>
   );
 }
