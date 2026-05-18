@@ -86,24 +86,24 @@ export default function InputForm({
 
       <section className="section">
         <h2>Workload</h2>
-        <div className="space-y-3">
-          <Field
+        <div className="space-y-4">
+          <Slider
             name="input.rps"
             question={fields.rps.question}
             options={fields.rps.options}
-            register={register}
+            control={control}
           />
-          <Field
+          <Slider
             name="input.dataVolume"
             question={fields.dataVolume.question}
             options={fields.dataVolume.options}
-            register={register}
+            control={control}
           />
-          <Field
+          <Slider
             name="input.growth"
             question={fields.growth.question}
             options={fields.growth.options}
-            register={register}
+            control={control}
           />
           <Field
             name="input.readWriteRatio"
@@ -153,12 +153,12 @@ export default function InputForm({
 
       <section className="section">
         <h2>Team & deployment</h2>
-        <div className="space-y-3">
-          <Field
+        <div className="space-y-4">
+          <Slider
             name="input.teamSize"
             question={fields.teamSize.question}
             options={fields.teamSize.options}
-            register={register}
+            control={control}
           />
           <Field
             name="input.teamExperience"
@@ -172,11 +172,11 @@ export default function InputForm({
             options={fields.deployment.options}
             register={register}
           />
-          <Field
+          <Slider
             name="input.budget"
             question={fields.budget.question}
             options={fields.budget.options}
-            register={register}
+            control={control}
           />
           <ComplianceField control={control} />
         </div>
@@ -222,6 +222,68 @@ function Field({
         ))}
       </select>
     </div>
+  );
+}
+
+function Slider({
+  name,
+  question,
+  options,
+  control,
+}: {
+  name: string;
+  question: string;
+  options: readonly SelectOption[];
+  control: ReturnType<typeof useForm<FormValues>>["control"];
+}) {
+  return (
+    <Controller
+      control={control}
+      name={name as never}
+      render={({ field }) => {
+        const idx = Math.max(
+          0,
+          options.findIndex((o) => o.value === field.value),
+        );
+        const current = options[idx] ?? options[0];
+        // Short tick label = part before " — " in the option label.
+        const tickLabel = (o: SelectOption) => o.label.split(" — ")[0] ?? o.label;
+        return (
+          <div>
+            <div className="flex justify-between items-baseline mb-1">
+              <label className="text-sm font-medium text-gray-700">
+                {question}
+              </label>
+              <span className="text-xs text-gray-600">{current?.label}</span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={options.length - 1}
+              step={1}
+              value={idx}
+              onChange={(e) => {
+                const next = options[Number(e.target.value)];
+                if (next) field.onChange(next.value);
+              }}
+              className="w-full accent-gray-900"
+            />
+            <div className="flex justify-between text-xs text-gray-400 mt-1">
+              {options.map((o, i) => (
+                <span
+                  key={o.value}
+                  className={
+                    i === idx ? "text-gray-700 font-medium" : ""
+                  }
+                >
+                  {tickLabel(o)}
+                </span>
+              ))}
+            </div>
+          </div>
+        );
+      }}
+    />
   );
 }
 
