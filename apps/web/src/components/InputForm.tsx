@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { InputSchema, type Input } from "@arch/core";
@@ -63,21 +63,27 @@ export default function InputForm({
     defaultValues: { name: "", input: initial ?? defaultInput },
   });
 
+  // Keep the latest onChange in a ref so the subscription below can stay
+  // mount-only. Without this, parents that pass inline arrow functions would
+  // cause the subscription to re-create on every render, which leads to an
+  // infinite emit loop (each emit triggers a re-render which triggers re-sub).
+  const onChangeRef = useRef(onChange);
   useEffect(() => {
-    if (!onChange) return;
-    // Emit initial values once so the preview shows the default architecture.
-    const initialValues = watch();
-    if (initialValues.input) {
-      onChange(initialValues as { name?: string; input: Input });
-    }
-    const sub = watch((value) => {
-      if (value.input) {
-        onChange(value as { name?: string; input: Input });
+    onChangeRef.current = onChange;
+  });
+
+  useEffect(() => {
+    const emit = (v: { name?: string; input?: Input }) => {
+      if (v.input && onChangeRef.current) {
+        onChangeRef.current({ name: v.name, input: v.input });
       }
-    });
+    };
+    // Initial emit so the preview shows the default architecture.
+    emit(watch());
+    const sub = watch((value) => emit(value as { name?: string; input?: Input }));
     return () => sub.unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onChange]);
+  }, []);
 
   const submit = handleSubmit(async (values) => {
     setSubmitting(true);
