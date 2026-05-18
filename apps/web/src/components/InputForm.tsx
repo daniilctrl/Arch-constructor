@@ -1,15 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
-import { InputSchema } from "@arch/core";
-import { createDesign } from "@/lib/api";
+import { InputSchema, type Input } from "@arch/core";
 import { defaultInput } from "@/lib/defaults";
 
-// Form-level schema adds the optional name field around the core input.
 const FormSchema = z.object({
   name: z.string().min(1).max(200).optional(),
   input: InputSchema,
@@ -32,46 +29,65 @@ const opts = {
 
 const complianceOptions = ["none", "gdpr", "hipaa", "pci"] as const;
 
-export default function InputForm() {
-  const router = useRouter();
+export type InputFormProps = {
+  /** Initial input shown in the form. Defaults to `defaultInput`. */
+  initial?: Input;
+  /** Whether to show the optional name field. Defaults to true. */
+  showName?: boolean;
+  /** Submit button label. */
+  submitLabel?: string;
+  /**
+   * Called with the validated form values on submit. Should throw to show an error.
+   * Whether to redirect/reset is the parent's call.
+   */
+  onSubmit: (values: { name?: string; input: Input }) => Promise<void>;
+};
+
+export default function InputForm({
+  initial,
+  showName = true,
+  submitLabel = "Build architecture",
+  onSubmit,
+}: InputFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const { register, handleSubmit, control, formState } = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
-    defaultValues: { name: "", input: defaultInput },
+    defaultValues: { name: "", input: initial ?? defaultInput },
   });
 
-  const onSubmit = handleSubmit(async (values) => {
+  const submit = handleSubmit(async (values) => {
     setSubmitting(true);
     setError(null);
     try {
-      const payload = {
+      await onSubmit({
         ...(values.name ? { name: values.name } : {}),
         input: values.input,
-      };
-      const design = await createDesign(payload);
-      router.push(`/designs/${design.id}`);
+      });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to create design");
+      setError(e instanceof Error ? e.message : "Submission failed");
+    } finally {
       setSubmitting(false);
     }
   });
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <section className="section">
-        <h2>About this design</h2>
-        <label className="label" htmlFor="name">
-          Name (optional)
-        </label>
-        <input
-          id="name"
-          className="input"
-          placeholder="e.g. Photo sharing service"
-          {...register("name")}
-        />
-      </section>
+    <form onSubmit={submit} className="space-y-4">
+      {showName && (
+        <section className="section">
+          <h2>About this design</h2>
+          <label className="label" htmlFor="name">
+            Name (optional)
+          </label>
+          <input
+            id="name"
+            className="input"
+            placeholder="e.g. Photo sharing service"
+            {...register("name")}
+          />
+        </section>
+      )}
 
       <section className="section">
         <h2>Workload</h2>
@@ -152,7 +168,7 @@ export default function InputForm() {
       )}
 
       <button type="submit" disabled={submitting} className="btn">
-        {submitting ? "Building..." : "Build architecture"}
+        {submitting ? "Working..." : submitLabel}
       </button>
     </form>
   );
@@ -199,4 +215,3 @@ function CheckBox({
     </label>
   );
 }
-

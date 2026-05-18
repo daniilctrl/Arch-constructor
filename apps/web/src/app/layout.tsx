@@ -16,7 +16,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <Link href="/" className="font-semibold">
               Arch Constructor
             </Link>
-            <nav className="text-sm">
+            <nav className="text-sm flex gap-4">
+              <Link href="/play" className="text-blue-600 hover:underline">
+                Play
+              </Link>
               <Link href="/new" className="text-blue-600 hover:underline">
                 New design
               </Link>
